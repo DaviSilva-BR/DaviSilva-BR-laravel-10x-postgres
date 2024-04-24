@@ -1,0 +1,64 @@
+version: "3.7"
+services:
+  app_local:
+    build:
+      args:
+        user: davi
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile.dev
+    working_dir: /var/www/
+    environment:
+      - COMPOSER_MEMORY_LIMIT=-1
+    depends_on:
+      - db_local
+    volumes:
+      - ./:/var/www
+    networks:
+      - lahmi
+      
+  pgadmin_local:
+    image: dpage/pgadmin4
+    ports:
+      - "5050:80"
+    depends_on:
+      - db_local
+    environment:
+      PGADMIN_DEFAULT_EMAIL: davigabriel.sp@outlook.com
+      PGADMIN_DEFAULT_PASSWORD: admin@123 
+    networks:
+      - lahmi
+
+  db_local:
+    image: postgres
+    volumes:
+      - ./postgresql/data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    environment: 
+      POSTGRES_DB: local
+      POSTGRES_USER: root 
+      POSTGRES_PASSWORD: password 
+    networks:
+      - lahmi
+
+  nginx_local:
+    image: nginx:alpine
+    ports:
+      - 8005:80
+    depends_on:
+      - db_local
+      - app_local
+    volumes:
+      - ./:/var/www
+      - ./docker-compose/nginx:/etc/nginx/conf.d/
+    networks:
+      - lahmi
+
+networks:
+  lahmi:
+    driver: bridge
+
+volumes:
+  dbdata:
+    driver: local
